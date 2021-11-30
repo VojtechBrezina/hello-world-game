@@ -16,9 +16,9 @@ config/icon="res://icon.png"
 
 [autoload]
 
-Global="*res://scripts/global.gd"
-Background="*res://scenes/components/Background.tscn"
-Narator="*res://scenes/components/Narator.tscn"
+Global="*res://components/Global.tscn"
+Background="*res://components/Background.tscn"
+Narator="*res://components/Narator.tscn"
 
 [display]
 
