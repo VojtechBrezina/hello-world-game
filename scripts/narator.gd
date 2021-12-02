@@ -28,6 +28,22 @@ func say(what):
 	$Tween.start()
 	get_tree().call_group('narator', 'narator_say', what)
 
+func state_load(data):
+	var my_data = data[name]
+	text = my_data['text']
+	ready = my_data['ready']
+	if not ready:
+		call_deferred('say', text)
+	else:
+		progress = len(text)
+		_on_Tween_tween_all_completed()
+
+func state_save(data):
+	data[name] = {
+		'text': text,
+		'ready': ready,
+	}
+
 func _set_progress(value):
 	progress = value
 	update()
