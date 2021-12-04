@@ -16,7 +16,7 @@ func _draw():
 		(Global.screen_size - ts) / 2 + Vector2(0, Global.font.size), \
 		t, Color8(200, 200, 200))
 	
-	if cursor:
+	if text != '' and cursor:
 		draw_rect(Rect2((Global.screen_size + ts) / 2 + Vector2(5, 0), Vector2(10, 2)), Color8(200, 200, 200))
 
 func say(what):
@@ -31,6 +31,7 @@ func state_load(data):
 	text = my_data['text']
 	progress = len(text)
 	$CursorTimer.start()
+	update()
 
 func state_save(data):
 	data[name] = {
@@ -42,9 +43,11 @@ func _set_progress(value):
 	update()
 
 func _on_Tween_tween_all_completed():
-	$CursorTimer.start()
+	if text != '':
+		$CursorTimer.start()
 	emit_signal('transition_completed')
 
 func _on_CursorTimer_timeout():
 	cursor = not cursor
+	
 	update()
