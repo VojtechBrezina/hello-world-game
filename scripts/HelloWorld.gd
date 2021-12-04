@@ -38,6 +38,8 @@ func play_script():
 		yield(self, 'click')
 		step += 1
 	
+	if step == 4:
+		Global.change_screen('BouncyBall')
 
 func state_save(data):
 	data[name] = {
