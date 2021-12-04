@@ -4,7 +4,7 @@ var text := ''
 var progress := 0 setget _set_progress 
 var cursor := false
 
-var ready := true
+signal transition_completed
 
 func _ready():
 	pass
@@ -23,25 +23,18 @@ func say(what):
 	text = what
 	$CursorTimer.stop()
 	cursor = true
-	ready = false
 	$Tween.interpolate_property(self, 'progress', 0, len(what), 0.1 * len(what))
 	$Tween.start()
-	get_tree().call_group('narator', 'narator_say', what)
 
 func state_load(data):
 	var my_data = data[name]
 	text = my_data['text']
-	ready = my_data['ready']
-	if not ready:
-		call_deferred('say', text)
-	else:
-		progress = len(text)
-		_on_Tween_tween_all_completed()
+	progress = len(text)
+	$CursorTimer.start()
 
 func state_save(data):
 	data[name] = {
 		'text': text,
-		'ready': ready,
 	}
 
 func _set_progress(value):
@@ -50,9 +43,7 @@ func _set_progress(value):
 
 func _on_Tween_tween_all_completed():
 	$CursorTimer.start()
-	ready = true
-	get_tree().call_group('narator', 'narator_ready')
-
+	emit_signal('transition_completed')
 
 func _on_CursorTimer_timeout():
 	cursor = not cursor

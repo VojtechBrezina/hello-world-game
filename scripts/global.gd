@@ -8,6 +8,12 @@ var screen = 'StartScreen'
 
 var global_state := {}
 
+var state_loaded = false
+
+signal state_loaded
+signal state_saved
+signal screen_ready
+
 func _ready():
 	font = DynamicFont.new()
 	font.font_data = load('res://Connection.otf')
@@ -18,14 +24,18 @@ func _ready():
 
 func _notification(what: int):
 	if what == NOTIFICATION_WM_QUIT_REQUEST:
-		call_deferred('save_state', true)
+		call_deferred('save_state')
+		yield(self, 'state_saved')
+		get_tree().quit()
 
 func load_state():
 	var file := File.new()
 	var error := file.open('user://state.json', File.READ)
 	if not error:
 		var data: Dictionary = JSON.parse(file.get_as_text()).result
-		get_tree().call_group('state', 'state_load', data)
+		change_screen(data[name]['screen'])
+		yield(self, 'screen_ready')
+		get_tree().call_group_flags(SceneTree.GROUP_CALL_REALTIME, 'state', 'state_load', data)
 		file.close()
 	elif error == ERR_FILE_NOT_FOUND:
 		change_screen('HelloWorld')
@@ -33,9 +43,10 @@ func load_state():
 		printerr("Error loading state.")
 		get_tree().quit()
 
+	state_loaded = true
+	emit_signal('state_loaded')
 		
-		
-func save_state(quit: bool = false):
+func save_state():
 	var file := File.new()
 	var data = {}
 	
@@ -43,19 +54,16 @@ func save_state(quit: bool = false):
 	
 	if !file.open('user://state.json', File.WRITE):
 		get_tree().quit()
-		file.store_string(JSON.print(data))
+		file.store_string(JSON.print(data, "    " if OS.is_debug_build() else ""))
 		file.close()
 	else:
 		printerr("Error saving state.")
-		
-	if quit:
-		get_tree().quit()
+	
+	emit_signal('state_saved')
 
 func state_load(data: Dictionary):
 	var my_data = data[name]
 	global_state = my_data['global_state']
-	call_deferred('change_screen',my_data['screen'])
-
 
 func state_save(data: Dictionary):
 	data[name] = {
@@ -64,9 +72,16 @@ func state_save(data: Dictionary):
 	}
 					
 func change_screen(name):
-	if get_tree().change_scene('res://scenes/%s.tscn' % name):
+	if get_tree().change_scene('res://screens/%s.tscn' % name):
 		printerr("Broken screen transition from %s to %s" % [screen, name])
-	screen = name
-	# Autosave between screens so web users have at least some persistence
-	if OS.get_name() == 'HTML5':
+		# Autosave between screens so web users have at least some persistence
+
+	if OS.get_name() == 'HTML5' and screen != 'StartScreen':
+		yield(self, 'screen_ready')
 		call_deferred('save_state')
+
+	screen = name
+	
+
+func screen_ready():
+	emit_signal('screen_ready')

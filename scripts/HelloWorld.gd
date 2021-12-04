@@ -3,35 +3,52 @@ extends Node2D
 var clicks := 0
 var step := 0
 
+signal click
+
 func _ready():
-	Background.set_color(Color8(50, 50, 50))
+	Global.screen_ready()
+	call_deferred('play_script')
 
-func background_ready():
-	Narator.say("Hello World!")
 
-func narator_ready():
-	match step:
-		1:
-			yield(get_tree().create_timer(1), 'timeout')
-			step += 1
-			Narator.say("A simple hello world isn't enough?")
-		3:
-			yield(get_tree().create_timer(1), 'timeout')
-			step += 1
-			Narator.say("I can make you a bouncy ball.")
+func play_script():
+	if not Global.state_loaded:
+		yield(Global, 'state_loaded')
+
+	if step == 0:
+		Background.set_color(Color8(50, 50, 50))
+		yield(Background, 'transition_completed')
+		Narator.say("Hello world!")
+		yield(Narator, 'transition_completed')
+		step += 1
+	
+	if step == 1:
+		for _i in range(10):
+			yield(self, 'click')
+		step += 1
+	
+	if step == 2:
+		Narator.say("Is this really not enough?")
+		yield(Narator, 'transition_completed')
+		yield(self, 'click')
+		step += 1
+
+	if step == 3:
+		Narator.say("I guess making a bouncing ball isn't that hard.")
+		yield(Narator, 'transition_completed')
+		yield(self, 'click')
+		step += 1
+	
+
+func state_save(data):
+	data[name] = {
+		'step': step
+	}
+
+func state_load(data):
+	var my_data = data[name]
+	step = my_data['step']
 
 
 func _input(event):
-	if not Narator.ready:
-		return
 	if event is InputEventMouseButton and event.button_index == BUTTON_LEFT:
-		clicks += 1
-		match step:
-			0:
-				if clicks >= 10:
-					step += 1
-					Narator.say("Waht's wrong?")
-					clicks = 0
-			2:
-				step += 1
-				Narator.say("Alright. If you insist...")
+		emit_signal('click')
