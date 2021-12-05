@@ -19,6 +19,7 @@ config/auto_accept_quit=false
 
 Global="*res://components/Global.tscn"
 Background="*res://components/Background.tscn"
+Ball="*res://components/Ball.tscn"
 Narator="*res://components/Narator.tscn"
 
 [display]
